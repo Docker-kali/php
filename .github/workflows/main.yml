@@ -1,0 +1,36 @@
+name: Deploy PHP Application
+
+on:
+  push:
+    branches:
+      - main  # Menjalankan workflow saat ada perubahan di branch "main"
+  workflow_dispatch:  # Memungkinkan menjalankan workflow secara manual
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.0'  # Sesuaikan versi PHP yang diperlukan
+        extensions: mbstring, intl  # Tambahkan ekstensi yang diperlukan
+
+    - name: Install Composer dependencies
+      run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+    - name: Run tests
+      run: phpunit tests  # Menjalankan unit test (opsional, jika ada)
+
+    - name: Deploy to FTP Server
+      uses: SamKirkland/FTP-Deploy-Action@4.1.0
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./  # Direktori lokal yang ingin di-upload
+        server-dir: /public_html  # Direktori di server FTP tempat file di-upload
